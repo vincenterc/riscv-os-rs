@@ -1,0 +1,3 @@
+[toolchain]
+components = ["llvm-tools-preview"]
+targets = ["riscv64gc-unknown-none-elf"]
