@@ -1,0 +1,37 @@
+target := "riscv64gc-unknown-none-elf"
+mode := "release"
+kernel_elf := f'target/{{target}}/{{mode}}/os'
+kernel_bin := f'{{kernel_elf}}.bin'
+bootloader := "../bootloader/rustsbi-qemu.bin"
+kernel_entry_pa := "0x80200000"
+objcopy := "rust-objcopy --binary-architecture=riscv64"
+qemu_name := "qemu-system-riscv64"
+qemu_args := f'-machine virt \
+               -nographic \
+               -bios {{bootloader}} \
+               -device loader,file={{kernel_bin}},addr={{kernel_entry_pa}}'
+
+default: build
+
+kernel:
+    @cargo build --{{mode}}
+
+kernel_bin: kernel
+    @{{objcopy}} {{kernel_elf}} --strip-all -O binary {{kernel_bin}}
+
+build: kernel_bin
+
+run: build
+    @{{qemu_name}} {{qemu_args}}
+
+gdb-server: build
+    @{{qemu_name}} {{qemu_args}} -s -S
+
+gdb-client:
+    @riscv64-unknown-elf-gdb \
+        -ex 'file target/riscv64gc-unknown-none-elf/release/os' \
+        -ex 'set arch riscv:rv64' \
+        -ex 'target remote localhost:1234'
+
+clean:
+    @cargo clean
