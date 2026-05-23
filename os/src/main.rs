@@ -5,10 +5,13 @@ use core::arch::global_asm;
 
 #[macro_use]
 mod console;
+mod batch;
 mod lang_items;
 mod sbi;
+mod sync;
 
 global_asm!(include_str!("entry.asm"));
+global_asm!(include_str!("link_app.S"));
 
 fn clear_bss() {
     unsafe extern "C" {
