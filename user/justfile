@@ -1,0 +1,24 @@
+target := "riscv64gc-unknown-none-elf"
+mode := "release"
+app_dir := "src/bin"
+target_dir := f'target/{{target}}/{{mode}}'
+
+objcopy := "rust-objcopy --binary-architecture=riscv64"
+
+default: build
+
+elf:
+    @cargo build --release
+
+binary: elf
+    @for app in {{app_dir}}/*.rs; do \
+        name=$(basename "$app" .rs); \
+        elf="{{target_dir}}/$name"; \
+        bin="{{target_dir}}/$name.bin"; \
+        {{objcopy}} "$elf" --strip-all -O binary "$bin"; \
+    done
+
+build: binary
+
+clean:
+    @cargo clean

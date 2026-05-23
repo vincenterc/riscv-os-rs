@@ -1,0 +1,36 @@
+[package]
+name = "user_lib"
+version = "0.1.0"
+edition = "2024"
+
+[dependencies]
+riscv = { git = "https://github.com/rcore-os/riscv", features = ["inline-asm"] }
+
+[lib]
+test = false
+bench = false
+
+[[bin]]
+name = "00hello_world"
+test = false
+bench = false
+
+[[bin]]
+name = "01store_fault"
+test = false
+bench = false
+
+[[bin]]
+name = "02power"
+test = false
+bench = false
+
+[[bin]]
+name = "03priv_inst"
+test = false
+bench = false
+
+[[bin]]
+name = "04priv_csr"
+test = false
+bench = false
