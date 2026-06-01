@@ -8,7 +8,7 @@ objcopy := "rust-objcopy --binary-architecture=riscv64"
 default: build
 
 elf:
-    @cargo build --release
+    @python3 build.py
 
 binary: elf
     @for app in {{app_dir}}/*.rs; do \

@@ -6,7 +6,9 @@ use core::arch::global_asm;
 #[macro_use]
 mod console;
 mod batch;
+mod config;
 mod lang_items;
+mod loader;
 mod sbi;
 mod sync;
 mod syscall;
@@ -30,5 +32,6 @@ pub fn rust_main() -> ! {
     println!("[kernel] Hello, world!");
     trap::init();
     batch::init();
+    loader::load_apps();
     batch::run_next_app();
 }
