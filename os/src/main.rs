@@ -5,13 +5,13 @@ use core::arch::global_asm;
 
 #[macro_use]
 mod console;
-mod batch;
 mod config;
 mod lang_items;
 mod loader;
 mod sbi;
 mod sync;
 mod syscall;
+mod task;
 mod trap;
 
 global_asm!(include_str!("entry.asm"));
@@ -31,7 +31,7 @@ pub fn rust_main() -> ! {
     clear_bss();
     println!("[kernel] Hello, world!");
     trap::init();
-    batch::init();
     loader::load_apps();
-    batch::run_next_app();
+    task::run_first_task();
+    panic!("Unreachable in rust_main!");
 }
