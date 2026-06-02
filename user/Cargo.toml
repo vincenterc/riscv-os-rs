@@ -11,16 +11,21 @@ test = false
 bench = false
 
 [[bin]]
-name = "00write_a"
+name = "00power_3"
 test = false
 bench = false
 
 [[bin]]
-name = "01write_b"
+name = "01power_5"
 test = false
 bench = false
 
 [[bin]]
-name = "02write_c"
+name = "02power_7"
+test = false
+bench = false
+
+[[bin]]
+name = "03sleep"
 test = false
 bench = false
