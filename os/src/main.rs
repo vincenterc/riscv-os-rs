@@ -37,6 +37,7 @@ pub fn rust_main() -> ! {
     println!("[kernel] Hello, world!");
     mm::init();
     mm::heap_test();
+    mm::frame_allocator_test();
     trap::init();
     loader::load_apps();
     trap::enable_timer_interrupt();
