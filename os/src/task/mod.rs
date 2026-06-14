@@ -1,12 +1,18 @@
+use alloc::vec::Vec;
 use lazy_static::lazy_static;
 
-use crate::{
-    config::MAX_APP_NUM, loader::{get_num_app, init_app_cx}, sbi::shutdown, sync::UPSafeCell
-};
-
 pub use context::TaskContext;
-use switch::__switch;
-use task::{TaskControlBlock, TaskStatus};
+
+use crate::{
+    loader::{get_app_data, get_num_app},
+    sbi::shutdown,
+    sync::UPSafeCell,
+    task::{
+        switch::__switch,
+        task::{TaskControlBlock, TaskStatus},
+    },
+    trap::TrapContext,
+};
 
 mod context;
 mod switch;
@@ -18,20 +24,18 @@ pub struct TaskManager {
 }
 
 struct TaskManagerInner {
-    tasks: [TaskControlBlock; MAX_APP_NUM],
+    tasks: Vec<TaskControlBlock>,
     current_task: usize,
 }
 
 lazy_static! {
     pub static ref TASK_MANAGER: TaskManager = {
+        println!("init TASK_MANAGER");
         let num_app = get_num_app();
-        let mut tasks = [TaskControlBlock {
-            task_cx: TaskContext::zero_init(),
-            task_status: TaskStatus::UnInit,
-        }; MAX_APP_NUM];
+        println!("num_app = {}", num_app);
+        let mut tasks: Vec<TaskControlBlock> = Vec::new();
         for i in 0..num_app {
-            tasks[i].task_cx = TaskContext::goto_restore(init_app_cx(i));
-            tasks[i].task_status = TaskStatus::Ready;
+            tasks.push(TaskControlBlock::new(get_app_data(i), i));
         }
         TaskManager {
             num_app,
@@ -48,9 +52,9 @@ lazy_static! {
 impl TaskManager {
     fn run_first_task(&self) -> ! {
         let mut inner = self.inner.exclusive_access();
-        let task0 = &mut inner.tasks[0];
-        task0.task_status = TaskStatus::Running;
-        let next_task_cx_ptr = &task0.task_cx as *const TaskContext;
+        let next_task = &mut inner.tasks[0];
+        next_task.task_status = TaskStatus::Running;
+        let next_task_cx_ptr = &next_task.task_cx as *const TaskContext;
         drop(inner);
         let mut _unused = TaskContext::zero_init();
         // before this, we should drop local variables that must be dropped manually
@@ -78,6 +82,18 @@ impl TaskManager {
         (current + 1..current + self.num_app + 1)
             .map(|id| id % self.num_app)
             .find(|id| inner.tasks[*id].task_status == TaskStatus::Ready)
+    }
+
+    fn get_current_token(&self) -> usize {
+        let inner = self.inner.exclusive_access();
+        let current = inner.current_task;
+        inner.tasks[current].get_user_token()
+    }
+
+    fn get_current_trap_cx(&self) -> &mut TrapContext {
+        let inner = self.inner.exclusive_access();
+        let current = inner.current_task;
+        inner.tasks[current].get_trap_cx()
     }
 
     fn run_next_task(&self) {
@@ -124,4 +140,12 @@ pub fn suspend_current_and_run_next() {
 pub fn exit_current_and_run_next() {
     mark_current_exited();
     run_next_task();
+}
+
+pub fn current_user_token() -> usize {
+    TASK_MANAGER.get_current_token()
+}
+
+pub fn current_trap_cx() -> &'static mut TrapContext {
+    TASK_MANAGER.get_current_trap_cx()
 }

@@ -1,4 +1,4 @@
-use core::arch::global_asm;
+use core::arch::{asm, global_asm};
 
 use riscv::register::{
     mtvec::TrapMode,
@@ -7,8 +7,12 @@ use riscv::register::{
 };
 
 use crate::{
+    config::{TRAMPOLINE, TRAP_CONTEXT},
     syscall::syscall,
-    task::{exit_current_and_run_next, suspend_current_and_run_next},
+    task::{
+        current_trap_cx, current_user_token, exit_current_and_run_next,
+        suspend_current_and_run_next,
+    },
     timer::set_next_trigger,
 };
 pub use context::TrapContext;
@@ -18,11 +22,18 @@ mod context;
 global_asm!(include_str!("trap.S"));
 
 pub fn init() {
-    unsafe extern "C" {
-        fn __alltraps();
-    }
+    set_kernel_trap_entry();
+}
+
+fn set_kernel_trap_entry() {
     unsafe {
-        stvec::write(__alltraps as *const () as usize, TrapMode::Direct);
+        stvec::write(trap_from_kernel as *const () as usize, TrapMode::Direct);
+    }
+}
+
+fn set_user_trap_entry() {
+    unsafe {
+        stvec::write(TRAMPOLINE as usize, TrapMode::Direct);
     }
 }
 
@@ -33,7 +44,9 @@ pub fn enable_timer_interrupt() {
 }
 
 #[unsafe(no_mangle)]
-pub fn trap_handler(cx: &mut TrapContext) -> &mut TrapContext {
+pub fn trap_handler() -> ! {
+    set_kernel_trap_entry();
+    let cx = current_trap_cx();
     let scause = scause::read();
     let stval = stval::read();
     match scause.cause() {
@@ -41,7 +54,10 @@ pub fn trap_handler(cx: &mut TrapContext) -> &mut TrapContext {
             cx.sepc += 4;
             cx.x[10] = syscall(cx.x[17], [cx.x[10], cx.x[11], cx.x[12]]) as usize;
         }
-        Trap::Exception(Exception::StoreFault) | Trap::Exception(Exception::StorePageFault) => {
+        Trap::Exception(Exception::StoreFault)
+        | Trap::Exception(Exception::StorePageFault)
+        | Trap::Exception(Exception::LoadFault)
+        | Trap::Exception(Exception::LoadPageFault) => {
             println!(
                 "[kernel] PageFault in application, bad addr = {:#x}, bad instruction = {:#x}, kernel killed it.",
                 stval, cx.sepc
@@ -64,5 +80,33 @@ pub fn trap_handler(cx: &mut TrapContext) -> &mut TrapContext {
             );
         }
     }
-    cx
+    trap_return();
+}
+
+#[unsafe(no_mangle)]
+pub fn trap_return() -> ! {
+    set_user_trap_entry();
+    let trap_cx_ptr = TRAP_CONTEXT;
+    let user_satp = current_user_token();
+    unsafe extern "C" {
+        unsafe fn __alltraps();
+        unsafe fn __restore();
+    }
+    let restore_va =
+        __restore as *const () as usize - __alltraps as *const () as usize + TRAMPOLINE;
+    unsafe {
+        asm!(
+            "fence.i",
+            "jr {restore_va}",
+            restore_va = in(reg) restore_va,
+            in("a0") trap_cx_ptr,
+            in("a1") user_satp,
+            options(noreturn)
+        );
+    }
+}
+
+#[unsafe(no_mangle)]
+pub fn trap_from_kernel() -> ! {
+    panic!("a trap from kernel!");
 }
