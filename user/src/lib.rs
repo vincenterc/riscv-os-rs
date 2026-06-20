@@ -1,5 +1,8 @@
 #![no_std]
-#![feature(linkage)]
+
+use core::ptr::addr_of_mut;
+
+use buddy_system_allocator::LockedHeap;
 
 use crate::syscall::*;
 
@@ -8,17 +11,28 @@ pub mod console;
 mod lang_items;
 mod syscall;
 
+unsafe extern "Rust" {
+    fn main() -> i32;
+}
+
+const USER_HEAP_SIZE: usize = 16384;
+
+static mut HEAP_SPACE: [u8; USER_HEAP_SIZE] = [0; USER_HEAP_SIZE];
+
+#[global_allocator]
+static HEAP: LockedHeap = LockedHeap::empty();
+
 #[unsafe(no_mangle)]
 #[unsafe(link_section = ".text.entry")]
 pub extern "C" fn _start() -> ! {
-    exit(main());
+    unsafe {
+        HEAP.lock()
+            .init(addr_of_mut!(HEAP_SPACE) as usize, USER_HEAP_SIZE);
+    }
+    unsafe {
+        exit(main());
+    }
     panic!("unreachable after sys_exit!");
-}
-
-#[linkage = "weak"]
-#[unsafe(no_mangle)]
-fn main() -> i32 {
-    panic!("Cannot find main!");
 }
 
 pub fn read(fd: usize, buf: &mut [u8]) -> isize {
