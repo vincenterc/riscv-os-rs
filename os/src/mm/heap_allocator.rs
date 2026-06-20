@@ -25,10 +25,10 @@ pub fn heap_test() {
     use alloc::boxed::Box;
     use alloc::vec::Vec;
     unsafe extern "C" {
-        unsafe fn sbss();
-        unsafe fn ebss();
+        fn sbss();
+        fn ebss();
     }
-    let bss_range = sbss as *const () as usize..ebss as *const () as usize;
+    let bss_range = linker_symbol_addr!(sbss)..linker_symbol_addr!(ebss);
     let a = Box::new(5);
     assert_eq!(*a, 5);
     assert!(bss_range.contains(&(a.as_ref() as *const _ as usize)));

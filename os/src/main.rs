@@ -6,6 +6,12 @@ extern crate alloc;
 
 use core::arch::global_asm;
 
+macro_rules! linker_symbol_addr {
+    ($symbol:path) => {
+        ($symbol as *const ()).addr()
+    };
+}
+
 #[macro_use]
 mod console;
 mod config;
@@ -27,8 +33,13 @@ fn clear_bss() {
         fn sbss();
         fn ebss();
     }
-    (sbss as *const () as usize..ebss as *const () as usize)
-        .for_each(|a| unsafe { (a as *mut u8).write_volatile(0) });
+    unsafe {
+        core::slice::from_raw_parts_mut(
+            linker_symbol_addr!(sbss) as *mut u8,
+            linker_symbol_addr!(sbss) - linker_symbol_addr!(ebss),
+        )
+        .fill(0);
+    }
 }
 
 #[unsafe(no_mangle)]

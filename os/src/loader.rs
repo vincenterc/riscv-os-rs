@@ -1,15 +1,15 @@
 pub fn get_num_app() -> usize {
     unsafe extern "C" {
-        unsafe fn _num_app();
+        fn _num_app();
     }
-    unsafe { (_num_app as *const () as usize as *const usize).read_volatile() }
+    unsafe { (linker_symbol_addr!(_num_app) as *const usize).read_volatile() }
 }
 
 pub fn get_app_data(app_id: usize) -> &'static [u8] {
     unsafe extern "C" {
-        unsafe fn _num_app();
+        fn _num_app();
     }
-    let num_app_ptr = _num_app as *const () as usize as *const usize;
+    let num_app_ptr = linker_symbol_addr!(_num_app) as *const usize;
     let num_app = get_num_app();
     let app_start = unsafe { core::slice::from_raw_parts(num_app_ptr.add(1), num_app + 1) };
     assert!(app_id < num_app);

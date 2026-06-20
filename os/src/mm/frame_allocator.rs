@@ -96,10 +96,10 @@ lazy_static! {
 
 pub fn init_frame_allocator() {
     unsafe extern "C" {
-        unsafe fn ekernel();
+        fn ekernel();
     }
     FRAME_ALLOCATOR.exclusive_access().init(
-        PhysAddr::from(ekernel as *const () as usize).ceil(),
+        PhysAddr::from(linker_symbol_addr!(ekernel)).ceil(),
         PhysAddr::from(MEMORY_END).floor(),
     );
 }

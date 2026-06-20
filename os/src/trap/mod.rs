@@ -27,7 +27,7 @@ pub fn init() {
 
 fn set_kernel_trap_entry() {
     unsafe {
-        stvec::write(trap_from_kernel as *const () as usize, TrapMode::Direct);
+        stvec::write(linker_symbol_addr!(trap_from_kernel), TrapMode::Direct);
     }
 }
 
@@ -89,11 +89,10 @@ pub fn trap_return() -> ! {
     let trap_cx_ptr = TRAP_CONTEXT;
     let user_satp = current_user_token();
     unsafe extern "C" {
-        unsafe fn __alltraps();
-        unsafe fn __restore();
+        fn __alltraps();
+        fn __restore();
     }
-    let restore_va =
-        __restore as *const () as usize - __alltraps as *const () as usize + TRAMPOLINE;
+    let restore_va = linker_symbol_addr!(__restore) - linker_symbol_addr!(__alltraps) + TRAMPOLINE;
     unsafe {
         asm!(
             "fence.i",
