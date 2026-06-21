@@ -1,6 +1,7 @@
 use crate::{
-    config::{TRAP_CONTEXT, kernel_stack_position},
+    config::TRAP_CONTEXT,
     mm::{KERNEL_SPACE, MapPermission, MemorySet, PhysPageNum, VirtAddr},
+    task::pid::kernel_stack_position,
     trap::{TrapContext, trap_handler},
 };
 
