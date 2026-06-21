@@ -12,21 +12,11 @@ test = false
 bench = false
 
 [[bin]]
-name = "00power_3"
+name = "initproc"
 test = false
 bench = false
 
 [[bin]]
-name = "01power_5"
-test = false
-bench = false
-
-[[bin]]
-name = "02power_7"
-test = false
-bench = false
-
-[[bin]]
-name = "03sleep"
+name = "user_shell"
 test = false
 bench = false
