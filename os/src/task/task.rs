@@ -97,7 +97,31 @@ impl TaskControlBlock {
     }
 
     pub fn exec(&self, elf_data: &[u8]) {
-        todo!()
+        // memory_set with elf program headers/trampoline/trap context/user stack
+        let (memory_set, user_sp, entry_point) = MemorySet::from_elf(elf_data);
+        let trap_cx_ppn = memory_set
+            .translate(VirtAddr::from(TRAP_CONTEXT).into())
+            .unwrap()
+            .ppn();
+
+        // **** access inner exclusively
+        let mut inner = self.inner_exclusive_access();
+        // substitute memory_set
+        inner.memory_set = memory_set;
+        // update trap_cx ppn
+        inner.trap_cx_ppn = trap_cx_ppn;
+        // initialize base_size
+        inner.base_size = user_sp;
+        // initialize trap_cx
+        let trap_cx = inner.get_trap_cx();
+        *trap_cx = TrapContext::app_init_context(
+            entry_point,
+            user_sp,
+            KERNEL_SPACE.exclusive_access().token(),
+            self.kernel_stack.get_top(),
+            linker_symbol_addr!(trap_handler),
+        );
+        // **** stop exclusively accessing inner automatically
     }
 
     pub fn fork(self: &Arc<TaskControlBlock>) -> Arc<TaskControlBlock> {
