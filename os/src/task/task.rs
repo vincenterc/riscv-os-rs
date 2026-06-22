@@ -7,9 +7,9 @@ use alloc::{
 
 use crate::{
     config::TRAP_CONTEXT,
-    mm::{KERNEL_SPACE, MapPermission, MemorySet, PhysPageNum, VirtAddr},
+    mm::{KERNEL_SPACE, MemorySet, PhysPageNum, VirtAddr},
     sync::UPSafeCell,
-    task::pid::{KernelStack, PidHandle, kernel_stack_position},
+    task::pid::{KernelStack, PidHandle, pid_alloc},
     trap::{TrapContext, trap_handler},
 };
 
@@ -58,7 +58,42 @@ impl TaskControlBlock {
     }
 
     pub fn new(elf_data: &[u8]) -> Self {
-        todo!()
+        // memory_set with elf program headers/trampoline/trap context/user stack
+        let (memory_set, user_sp, entry_point) = MemorySet::from_elf(elf_data);
+        let trap_cx_ppn = memory_set
+            .translate(VirtAddr::from(TRAP_CONTEXT).into())
+            .unwrap()
+            .ppn();
+        // alloc a pid and a kernel stack in kernel space
+        let pid_handle = pid_alloc();
+        let kernel_stack = KernelStack::new(&pid_handle);
+        let kernel_stack_top = kernel_stack.get_top();
+        let task_control_block = Self {
+            pid: pid_handle,
+            kernel_stack,
+            inner: unsafe {
+                UPSafeCell::new(TaskControlBlockInner {
+                    trap_cx_ppn,
+                    base_size: user_sp,
+                    task_cx: TaskContext::goto_trap_return(kernel_stack_top),
+                    task_status: TaskStatus::Ready,
+                    memory_set,
+                    parent: None,
+                    children: Vec::new(),
+                    exit_code: 0,
+                })
+            },
+        };
+        // prepare TrapContext in user space
+        let trap_cx = task_control_block.inner_exclusive_access().get_trap_cx();
+        *trap_cx = TrapContext::app_init_context(
+            entry_point,
+            user_sp,
+            KERNEL_SPACE.exclusive_access().token(),
+            kernel_stack_top,
+            linker_symbol_addr!(trap_handler),
+        );
+        task_control_block
     }
 
     pub fn exec(&self, elf_data: &[u8]) {
