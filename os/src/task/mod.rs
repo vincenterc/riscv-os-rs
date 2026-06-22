@@ -6,7 +6,11 @@ pub use processor::{current_trap_cx, current_user_token, run_tasks};
 
 use crate::{
     loader::get_app_data_by_name,
-    task::{manager::add_task, task::TaskControlBlock},
+    task::{
+        manager::add_task,
+        processor::{schedule, take_current_task},
+        task::{TaskControlBlock, TaskStatus},
+    },
 };
 
 mod context;
@@ -17,7 +21,21 @@ mod switch;
 mod task;
 
 pub fn suspend_current_and_run_next() {
-    todo!();
+    // There must be an application running.
+    let task = take_current_task().unwrap();
+
+    // ---- access current TCB exclusively
+    let mut task_inner = task.inner_exclusive_access();
+    let task_cx_ptr = &mut task_inner.task_cx as *mut TaskContext;
+    // Change status to Ready
+    task_inner.task_status = TaskStatus::Ready;
+    drop(task_inner);
+    // ---- stop exclusively accessing current TCB
+
+    // push back to ready queue.
+    add_task(task);
+    // jump to scheduling cycle
+    schedule(task_cx_ptr);
 }
 
 pub fn exit_current_and_run_next() {
