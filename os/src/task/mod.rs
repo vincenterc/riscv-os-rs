@@ -2,12 +2,12 @@ use alloc::sync::Arc;
 use lazy_static::lazy_static;
 
 pub use context::TaskContext;
-pub use processor::{current_trap_cx, current_user_token, run_tasks};
+pub use manager::add_task;
+pub use processor::{current_task, current_trap_cx, current_user_token, run_tasks};
 
 use crate::{
     loader::get_app_data_by_name,
     task::{
-        manager::add_task,
         processor::{schedule, take_current_task},
         task::{TaskControlBlock, TaskStatus},
     },
@@ -24,13 +24,13 @@ pub fn suspend_current_and_run_next() {
     // There must be an application running.
     let task = take_current_task().unwrap();
 
-    // ---- access current TCB exclusively
+    // ---- access current PCB exclusively
     let mut task_inner = task.inner_exclusive_access();
     let task_cx_ptr = &mut task_inner.task_cx as *mut TaskContext;
     // Change status to Ready
     task_inner.task_status = TaskStatus::Ready;
     drop(task_inner);
-    // ---- stop exclusively accessing current TCB
+    // ---- stop exclusively accessing current PCB
 
     // push back to ready queue.
     add_task(task);
