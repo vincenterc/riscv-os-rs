@@ -1,8 +1,10 @@
 pub use context::TaskContext;
+pub use processor::{current_trap_cx, current_user_token, run_tasks};
 
 mod context;
 mod manager;
 mod pid;
+mod processor;
 mod switch;
 mod task;
 
