@@ -1,6 +1,6 @@
 pub use address::{PhysPageNum, VirtAddr};
 pub use memory_set::{KERNEL_SPACE, MapPermission, MemorySet, remap_test};
-pub use page_table::{translated_byte_buffer, translated_str};
+pub use page_table::{translated_byte_buffer, translated_refmut, translated_str};
 
 mod address;
 mod frame_allocator;

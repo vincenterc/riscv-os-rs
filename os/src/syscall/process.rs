@@ -1,6 +1,8 @@
+use alloc::sync::Arc;
+
 use crate::{
     loader::get_app_data_by_name,
-    mm::translated_str,
+    mm::{translated_refmut, translated_str},
     task::{
         add_task, current_task, current_user_token, exit_current_and_run_next,
         suspend_current_and_run_next,
@@ -48,4 +50,41 @@ pub fn sys_exec(path: *const u8) -> isize {
     } else {
         -1
     }
+}
+
+/// If there is not a child process whose pid is same as given, return -1.
+/// Else if there is a child process but it is still running, return -2.
+pub fn sys_waitpid(pid: isize, exit_code_ptr: *mut i32) -> isize {
+    let task = current_task().unwrap();
+    // find a child process
+
+    // ---- access current PCB exclusively
+    let mut inner = task.inner_exclusive_access();
+    if !inner
+        .children
+        .iter()
+        .any(|p| pid == -1 || pid as usize == p.getpid())
+    {
+        return -1;
+        // ---- stop exclusively accessing current PCB
+    }
+    let pair = inner.children.iter().enumerate().find(|(_, p)| {
+        // ++++ temporarily access child PCB exclusively
+        p.inner_exclusive_access().is_zombie() && (pid == -1 || pid as usize == p.getpid())
+        // ++++ stop exclusively accessing child PCB
+    });
+    if let Some((idx, _)) = pair {
+        let child = inner.children.remove(idx);
+        // confirm that child will be deallocated after removing from children list
+        assert_eq!(Arc::strong_count(&child), 1);
+        let found_pid = child.getpid();
+        // ++++ temporarily access child TCB exclusively
+        let exit_code = child.inner_exclusive_access().exit_code;
+        // ++++ stop exclusively accessing child PCB
+        *translated_refmut(inner.memory_set.token(), exit_code_ptr) = exit_code;
+        found_pid as isize
+    } else {
+        -2
+    }
+    // ---- stop exclusively accessing current PCB automatically
 }

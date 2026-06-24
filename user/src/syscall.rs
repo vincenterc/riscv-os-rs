@@ -59,10 +59,6 @@ pub fn sys_exec(path: &str) -> isize {
     syscall(SYSCALL_EXEC, [path.as_ptr() as usize, 0, 0])
 }
 
-/// # Return Value
-/// - '>0': child's pid
-/// - '-1': no matching child process
-/// - '-2': child is still running
 pub fn sys_waitpid(pid: isize, exit_code: *mut i32) -> isize {
     syscall(SYSCALL_WAITPID, [pid as usize, exit_code as usize, 0])
 }
