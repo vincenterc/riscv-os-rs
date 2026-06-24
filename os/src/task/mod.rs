@@ -7,6 +7,7 @@ pub use processor::{current_task, current_trap_cx, current_user_token, run_tasks
 
 use crate::{
     loader::get_app_data_by_name,
+    sbi::shutdown,
     task::{
         processor::{schedule, take_current_task},
         task::{TaskControlBlock, TaskStatus},
@@ -19,6 +20,9 @@ mod pid;
 mod processor;
 mod switch;
 mod task;
+
+/// pid of usertests app
+pub const IDLE_PID: usize = 0;
 
 pub fn suspend_current_and_run_next() {
     // There must be an application running.
@@ -38,8 +42,51 @@ pub fn suspend_current_and_run_next() {
     schedule(task_cx_ptr);
 }
 
-pub fn exit_current_and_run_next() {
-    todo!();
+pub fn exit_current_and_run_next(exit_code: i32) {
+    // take from Processor
+    let task = take_current_task().unwrap();
+
+    let pid = task.getpid();
+    if pid == IDLE_PID {
+        println!(
+            "[kernel] Idle process exit with exit_code {} ...",
+            exit_code
+        );
+        if exit_code != 0 {
+            shutdown(true)
+        } else {
+            shutdown(false)
+        }
+    }
+
+    // **** access current PCB exclusively
+    let mut inner = task.inner_exclusive_access();
+    // Change status to Zombie
+    inner.task_status = TaskStatus::Zombie;
+    // Record exit code
+    inner.exit_code = exit_code;
+    // do not move to its parent but under initproc
+
+    // ++++++ access initproc PCB exclusively
+    {
+        let mut initproc_inner = INITPROC.inner_exclusive_access();
+        for child in inner.children.iter() {
+            child.inner_exclusive_access().parent = Some(Arc::downgrade(&INITPROC));
+            initproc_inner.children.push(child.clone());
+        }
+    }
+    // ++++++ stop exclusively accessing parent PCB
+
+    inner.children.clear();
+    // deallocate user space
+    inner.memory_set.recycle_data_pages();
+    drop(inner);
+    // **** stop exclusively accessing current PCB
+    // drop task manually to maintain rc correctly
+    drop(task);
+    // we do not have to save task context
+    let mut _unused = TaskContext::zero_init();
+    schedule(&mut _unused as *mut _);
 }
 
 lazy_static! {

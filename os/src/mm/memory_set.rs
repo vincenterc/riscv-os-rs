@@ -273,6 +273,10 @@ impl MemorySet {
     pub fn translate(&self, vpn: VirtPageNum) -> Option<PageTableEntry> {
         self.page_table.translate(vpn)
     }
+
+    pub fn recycle_data_pages(&mut self) {
+        self.areas.clear()
+    }
 }
 
 pub struct MapArea {
