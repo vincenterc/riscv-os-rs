@@ -1,5 +1,3 @@
-use core::str::from_utf8;
-
 use alloc::vec::Vec;
 use lazy_static::lazy_static;
 

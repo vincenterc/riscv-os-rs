@@ -12,6 +12,11 @@ test = false
 bench = false
 
 [[bin]]
+name = "hello_world"
+test = false
+bench = false
+
+[[bin]]
 name = "initproc"
 test = false
 bench = false
