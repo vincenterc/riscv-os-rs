@@ -21,7 +21,7 @@ mod processor;
 mod switch;
 mod task;
 
-/// pid of usertests app
+/// pid of usertests app in TEST=1
 pub const IDLE_PID: usize = 0;
 
 pub fn suspend_current_and_run_next() {
@@ -46,6 +46,7 @@ pub fn exit_current_and_run_next(exit_code: i32) {
     // take from Processor
     let task = take_current_task().unwrap();
 
+    // TODO: no need
     let pid = task.getpid();
     if pid == IDLE_PID {
         println!(
