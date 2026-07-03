@@ -60,4 +60,8 @@ impl Bitmap {
                 bitmap_block[bits64_pos] -= 1u64 << inner_pos;
             });
     }
+
+    pub fn maximum(&self) -> usize {
+        self.blocks * BLOCK_BITS
+    }
 }
