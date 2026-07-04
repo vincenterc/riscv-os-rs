@@ -5,3 +5,4 @@ edition = "2024"
 
 [dependencies]
 easy-fs = { path = "../easy-fs" }
+rand = "0.8.0"
