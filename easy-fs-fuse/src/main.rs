@@ -1,9 +1,10 @@
 use std::{
-    fs::{File, OpenOptions},
+    fs::{File, OpenOptions, read_dir},
     io::{Read, Seek, SeekFrom, Write},
     sync::{Arc, Mutex},
 };
 
+use clap::{App, Arg};
 use easy_fs::{BlockDevice, EasyFileSystem};
 
 const BLOCK_SZ: usize = 512;
@@ -26,7 +27,66 @@ impl BlockDevice for BlockFile {
     }
 }
 
-fn main() {}
+fn main() {
+    easy_fs_pack().expect("Error when packing easy-fs!");
+}
+
+fn easy_fs_pack() -> std::io::Result<()> {
+    let matches = App::new("EasyFileSystem packer")
+        .arg(
+            Arg::with_name("source")
+                .short("s")
+                .long("source")
+                .takes_value(true)
+                .help("Executable source dir(with backslash)"),
+        )
+        .arg(
+            Arg::with_name("target")
+                .short("t")
+                .long("target")
+                .takes_value(true)
+                .help("Executable target dir(with backslash)"),
+        )
+        .get_matches();
+    let src_path = matches.value_of("source").unwrap();
+    let target_path = matches.value_of("target").unwrap();
+    println!("src_path = {}\ntarget_path = {}", src_path, target_path);
+    let block_file = Arc::new(BlockFile(Mutex::new({
+        let f = OpenOptions::new()
+            .read(true)
+            .write(true)
+            .create(true)
+            .open(format!("{}{}", target_path, "fs.img"))?;
+        f.set_len(32 * 2048 * 512).unwrap();
+        f
+    })));
+    // 32MiB, at most 4095 files
+    let efs = EasyFileSystem::create(block_file, 32 * 2048, 1);
+    let root_inode = Arc::new(EasyFileSystem::root_inode(&efs));
+    let apps: Vec<_> = read_dir(src_path)
+        .unwrap()
+        .into_iter()
+        .filter_map(|dir_entry| {
+            let name_with_ext = dir_entry.ok()?.file_name().into_string().ok()?;
+            name_with_ext.strip_suffix(".rs").map(str::to_owned)
+        })
+        .collect();
+    for app in apps {
+        // load app data from host file system
+        let mut host_file = File::open(format!("{}{}", target_path, app)).unwrap();
+        let mut all_data: Vec<u8> = Vec::new();
+        host_file.read_to_end(&mut all_data).unwrap();
+        // create a file in easy-fs
+        let inode = root_inode.create(app.as_str()).unwrap();
+        // write data to easy-fs
+        inode.write_at(0, all_data.as_slice());
+    }
+    // list apps
+    for app in root_inode.ls() {
+        println!("{}", app);
+    }
+    Ok(())
+}
 
 #[test]
 fn efs_test() -> std::io::Result<()> {
