@@ -18,7 +18,6 @@ mod config;
 mod drivers;
 mod fs;
 mod lang_items;
-mod loader;
 mod mm;
 mod sbi;
 mod sync;
@@ -28,7 +27,6 @@ mod timer;
 mod trap;
 
 global_asm!(include_str!("entry.asm"));
-global_asm!(include_str!("link_app.S"));
 
 fn clear_bss() {
     unsafe extern "C" {

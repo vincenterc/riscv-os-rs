@@ -13,12 +13,22 @@ test = false
 bench = false
 
 [[bin]]
+name = "cat_filea"
+test = false
+bench = false
+
+[[bin]]
 name = "exit"
 test = false
 bench = false
 
 [[bin]]
 name = "fantastic_text"
+test = false
+bench = false
+
+[[bin]]
+name = "filetest_simple"
 test = false
 bench = false
 
@@ -49,6 +59,11 @@ bench = false
 
 [[bin]]
 name = "hello_world"
+test = false
+bench = false
+
+[[bin]]
+name = "huge_write"
 test = false
 bench = false
 
