@@ -6,7 +6,7 @@ pub use manager::add_task;
 pub use processor::{current_task, current_trap_cx, current_user_token, run_tasks};
 
 use crate::{
-    loader::get_app_data_by_name,
+    fs::{OpenFlags, open_file},
     sbi::shutdown,
     task::{
         processor::{schedule, take_current_task},
@@ -91,9 +91,11 @@ pub fn exit_current_and_run_next(exit_code: i32) {
 }
 
 lazy_static! {
-    pub static ref INITPROC: Arc<TaskControlBlock> = Arc::new(TaskControlBlock::new(
-        get_app_data_by_name("initproc").unwrap()
-    ));
+    pub static ref INITPROC: Arc<TaskControlBlock> = Arc::new({
+        let inode = open_file("initproc", OpenFlags::RDONLY).unwrap();
+        let v = inode.read_all();
+        TaskControlBlock::new(v.as_slice())
+    });
 }
 
 pub fn add_initproc() {
