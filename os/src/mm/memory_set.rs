@@ -6,7 +6,7 @@ use lazy_static::lazy_static;
 use riscv::register::satp;
 
 use crate::{
-    config::{MEMORY_END, PAGE_SIZE, TRAMPOLINE, TRAP_CONTEXT, USER_STACK_SIZE},
+    config::{MEMORY_END, MMIO, PAGE_SIZE, TRAMPOLINE, TRAP_CONTEXT, USER_STACK_SIZE},
     mm::{
         address::{PhysAddr, PhysPageNum, StepByOne, VPNRange, VirtAddr, VirtPageNum},
         frame_allocator::{FrameTracker, frame_alloc},
@@ -170,6 +170,18 @@ impl MemorySet {
             ),
             None,
         );
+        println!("mapping memory-mapped registers");
+        for pair in MMIO {
+            memory_set.push(
+                MapArea::new(
+                    (*pair).0.into(),
+                    ((*pair).0 + (*pair).1).into(),
+                    MapType::Identical,
+                    MapPermission::R | MapPermission::W,
+                ),
+                None,
+            );
+        }
         memory_set
     }
 
@@ -385,6 +397,10 @@ bitflags! {
         const X = 1 << 3;
         const U = 1 << 4;
     }
+}
+
+pub fn kernel_token() -> usize {
+    KERNEL_SPACE.exclusive_access().token()
 }
 
 pub fn remap_test() {

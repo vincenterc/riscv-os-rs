@@ -2,6 +2,8 @@ target := "riscv64gc-unknown-none-elf"
 mode := "release"
 kernel_elf := f'target/{{target}}/{{mode}}/os'
 kernel_bin := f'{{kernel_elf}}.bin'
+fs_img := f'../user/target/{{target}}/{{mode}}/fs.img'
+apps := "../user/src/bin/"
 bootloader := "../bootloader/rustsbi-qemu.bin"
 kernel_entry_pa := "0x80200000"
 objcopy := "rust-objcopy --binary-architecture=riscv64"
@@ -9,7 +11,9 @@ qemu_name := "qemu-system-riscv64"
 qemu_args := f'-machine virt \
                -nographic \
                -bios {{bootloader}} \
-               -device loader,file={{kernel_bin}},addr={{kernel_entry_pa}}'
+               -device loader,file={{kernel_bin}},addr={{kernel_entry_pa}}
+               -drive file={{fs_img}},if=none,format=raw,id=x0 \
+               -device virtio-blk-device,drive=x0,bus=virtio-mmio-bus.0'
 
 default: build
 
@@ -20,7 +24,12 @@ kernel:
 kernel_bin: kernel
     @{{objcopy}} {{kernel_elf}} --strip-all -O binary {{kernel_bin}}
 
-build: kernel_bin
+fs-img:
+    @cd ../user && just build 
+    @rm -f {{fs_img}}
+    @cd ../easy-fs-fuse && cargo run --release -- -s {{apps}} -t ../user/target/{{target}}/{{mode}}/
+
+build: kernel_bin fs-img
 
 run: build
     @{{qemu_name}} {{qemu_args}}
