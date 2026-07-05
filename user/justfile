@@ -11,11 +11,11 @@ elf:
     @cargo build --release
 
 binary: elf
-    @for app in {{app_dir}}/*.rs; do \
+    @for app in {{ app_dir }}/*.rs; do \
         name=$(basename "$app" .rs); \
-        elf="{{target_dir}}/$name"; \
-        bin="{{target_dir}}/$name.bin"; \
-        {{objcopy}} "$elf" --strip-all -O binary "$bin"; \
+        elf="{{ target_dir }}/$name"; \
+        bin="{{ target_dir }}/$name.bin"; \
+        {{ objcopy }} "$elf" --strip-all -O binary "$bin"; \
     done
 
 build: binary

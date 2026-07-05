@@ -19,23 +19,23 @@ default: build
 
 kernel:
     @cd ../user && just build
-    @cargo build --{{mode}}
+    @cargo build --{{ mode }}
 
 kernel_bin: kernel
-    @{{objcopy}} {{kernel_elf}} --strip-all -O binary {{kernel_bin}}
+    @{{ objcopy }} {{ kernel_elf }} --strip-all -O binary {{ kernel_bin }}
 
 fs-img:
     @cd ../user && just build 
-    @rm -f {{fs_img}}
-    @cd ../easy-fs-fuse && cargo run --release -- -s {{apps}} -t ../user/target/{{target}}/{{mode}}/
+    @rm -f {{ fs_img }}
+    @cd ../easy-fs-fuse && cargo run --release -- -s {{ apps }} -t ../user/target/{{ target }}/{{ mode }}/
 
 build: kernel_bin fs-img
 
 run: build
-    @{{qemu_name}} {{qemu_args}}
+    @{{ qemu_name }} {{ qemu_args }}
 
 gdb-server: build
-    @{{qemu_name}} {{qemu_args}} -s -S
+    @{{ qemu_name }} {{ qemu_args }} -s -S
 
 gdb-client:
     @riscv64-unknown-elf-gdb \
