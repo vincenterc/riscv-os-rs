@@ -2,12 +2,13 @@ use core::cell::RefMut;
 
 use alloc::{
     sync::{Arc, Weak},
+    vec,
     vec::Vec,
 };
 
 use crate::{
     config::TRAP_CONTEXT,
-    fs::File,
+    fs::{File, Stdin, Stdout},
     mm::{KERNEL_SPACE, MemorySet, PhysPageNum, VirtAddr},
     sync::UPSafeCell,
     task::pid::{KernelStack, PidHandle, pid_alloc},
@@ -92,16 +93,14 @@ impl TaskControlBlock {
                     parent: None,
                     children: Vec::new(),
                     exit_code: 0,
-                    // TODO
-                    // fd_table: vec![
-                    //     // 0 -> stdin
-                    //     Some(Arc::new(Stdin)),
-                    //     // 1 -> stdout
-                    //     Some(Arc::new(Stdout)),
-                    //     // 2 -> stderr
-                    //     Some(Arc::new(Stdout)),
-                    // ],
-                    fd_table: Vec::new(),
+                    fd_table: vec![
+                        // 0 -> stdin
+                        Some(Arc::new(Stdin)),
+                        // 1 -> stdout
+                        Some(Arc::new(Stdout)),
+                        // 2 -> stderr
+                        Some(Arc::new(Stdout)),
+                    ],
                 })
             },
         };
