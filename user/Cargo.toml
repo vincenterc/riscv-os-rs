@@ -78,6 +78,16 @@ test = false
 bench = false
 
 [[bin]]
+name = "pipe_large_test"
+test = false
+bench = false
+
+[[bin]]
+name = "pipetest"
+test = false
+bench = false
+
+[[bin]]
 name = "sleep"
 test = false
 bench = false
