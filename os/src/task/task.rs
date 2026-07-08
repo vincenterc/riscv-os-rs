@@ -124,24 +124,22 @@ impl TaskControlBlock {
             .unwrap()
             .ppn();
 
-        // **** access inner exclusively
+        // **** access current PCB exclusively
         let mut inner = self.inner_exclusive_access();
         // substitute memory_set
         inner.memory_set = memory_set;
         // update trap_cx ppn
         inner.trap_cx_ppn = trap_cx_ppn;
-        // initialize base_size
-        inner.base_size = user_sp;
         // initialize trap_cx
-        let trap_cx = inner.get_trap_cx();
-        *trap_cx = TrapContext::app_init_context(
+        let trap_cx = TrapContext::app_init_context(
             entry_point,
             user_sp,
             KERNEL_SPACE.exclusive_access().token(),
             self.kernel_stack.get_top(),
             linker_symbol_addr!(trap_handler),
         );
-        // **** stop exclusively accessing inner automatically
+        *inner.get_trap_cx() = trap_cx;
+        // **** release current PCB
     }
 
     pub fn fork(self: &Arc<TaskControlBlock>) -> Arc<TaskControlBlock> {
