@@ -45,4 +45,6 @@ gdb-client:
 
 clean:
     @cd ../user && cargo clean
+    @cd ../easy-fs && cargo clean
+    @cd ../easy-fs-fuse && cargo clean
     @cargo clean
