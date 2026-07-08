@@ -33,7 +33,6 @@ pub extern "C" fn _start() -> ! {
     unsafe {
         exit(main());
     }
-    panic!("unreachable after sys_exit!");
 }
 
 bitflags! {
@@ -62,8 +61,8 @@ pub fn write(fd: usize, buf: &[u8]) -> isize {
     sys_write(fd, buf)
 }
 
-pub fn exit(exit_code: i32) -> isize {
-    sys_exit(exit_code)
+pub fn exit(exit_code: i32) -> ! {
+    sys_exit(exit_code);
 }
 
 pub fn yield_() -> isize {
