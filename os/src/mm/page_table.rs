@@ -2,6 +2,7 @@ use alloc::vec::Vec;
 use alloc::{string::String, vec};
 use bitflags::bitflags;
 
+use crate::mm::page_table;
 use crate::mm::{
     VirtAddr,
     address::{PhysAddr, PhysPageNum, StepByOne, VirtPageNum},
@@ -191,6 +192,14 @@ pub fn translated_str(token: usize, ptr: *const u8) -> String {
         }
     }
     string
+}
+
+pub fn translated_ref<T>(token: usize, ptr: *const T) -> &'static T {
+    let page_table = PageTable::from_token(token);
+    page_table
+        .translate_va(VirtAddr::from(ptr as usize))
+        .unwrap()
+        .get_ref()
 }
 
 pub fn translated_refmut<T>(token: usize, ptr: *mut T) -> &'static mut T {

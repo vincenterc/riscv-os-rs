@@ -28,13 +28,41 @@ static FAIL_TESTS: &[(&str, &str, &str, &str, i32)] = &[("stack_overflow\0", "\0
 
 fn run_tests(tests: &[(&str, &str, &str, &str, i32)]) -> i32 {
     let mut pass_num = 0;
+    let mut arr: [*const u8; 4] = [
+        core::ptr::null::<u8>(),
+        core::ptr::null::<u8>(),
+        core::ptr::null::<u8>(),
+        core::ptr::null::<u8>(),
+    ];
 
     for test in tests {
         println!("Usertests: Running {}", test.0);
+        arr[0] = test.0.as_ptr();
+        if test.1 != "\0" {
+            arr[1] = test.1.as_ptr();
+            arr[2] = core::ptr::null::<u8>();
+            arr[3] = core::ptr::null::<u8>();
+            if test.2 != "\0" {
+                arr[2] = test.2.as_ptr();
+                arr[3] = core::ptr::null::<u8>();
+                if test.3 != "\0" {
+                    arr[3] = test.3.as_ptr();
+                } else {
+                    arr[3] = core::ptr::null::<u8>();
+                }
+            } else {
+                arr[2] = core::ptr::null::<u8>();
+                arr[3] = core::ptr::null::<u8>();
+            }
+        } else {
+            arr[1] = core::ptr::null::<u8>();
+            arr[2] = core::ptr::null::<u8>();
+            arr[3] = core::ptr::null::<u8>();
+        }
 
         let pid = fork();
         if pid == 0 {
-            exec(test.0);
+            exec(test.0, &arr[..]);
             panic!("unreachable!");
         } else {
             let mut exit_code: i32 = Default::default();

@@ -2,10 +2,13 @@
 
 use core::ptr::addr_of_mut;
 
+use alloc::vec::Vec;
 use bitflags::bitflags;
 use buddy_system_allocator::LockedHeap;
 
 use crate::syscall::*;
+
+extern crate alloc;
 
 #[macro_use]
 pub mod console;
@@ -13,7 +16,7 @@ mod lang_items;
 mod syscall;
 
 unsafe extern "Rust" {
-    fn main() -> i32;
+    fn main(argc: usize, argv: &[&str]) -> i32;
 }
 
 const USER_HEAP_SIZE: usize = 16384;
@@ -25,15 +28,28 @@ static HEAP: LockedHeap = LockedHeap::empty();
 
 #[unsafe(no_mangle)]
 #[unsafe(link_section = ".text.entry")]
-pub extern "C" fn _start() -> ! {
+pub extern "C" fn _start(argc: usize, argv: usize) -> ! {
     unsafe {
         HEAP.lock()
             .init(addr_of_mut!(HEAP_SPACE) as usize, USER_HEAP_SIZE);
     }
-    unsafe {
-        exit(main());
+    let mut v: Vec<&'static str> = Vec::new();
+    for i in 0..argc {
+        let str_start =
+            unsafe { ((argv + i * core::mem::size_of::<usize>()) as *const usize).read_volatile() };
+        let len = (0usize..)
+            .find(|i| unsafe { ((str_start + *i) as *const u8).read_volatile() == 0 })
+            .unwrap();
+        v.push(
+            core::str::from_utf8(unsafe {
+                core::slice::from_raw_parts(str_start as *const u8, len)
+            })
+            .unwrap(),
+        );
     }
-    panic!("unreachable after sys_exit!");
+    unsafe {
+        exit(main(argc, v.as_slice()));
+    }
 }
 
 bitflags! {
@@ -66,8 +82,8 @@ pub fn write(fd: usize, buf: &[u8]) -> isize {
     sys_write(fd, buf)
 }
 
-pub fn exit(exit_code: i32) -> isize {
-    sys_exit(exit_code)
+pub fn exit(exit_code: i32) -> ! {
+    sys_exit(exit_code);
 }
 
 pub fn yield_() -> isize {
@@ -86,8 +102,8 @@ pub fn fork() -> isize {
     sys_fork()
 }
 
-pub fn exec(path: &str) -> isize {
-    sys_exec(path)
+pub fn exec(path: &str, args: &[*const u8]) -> isize {
+    sys_exec(path, args)
 }
 
 pub fn wait(exit_code: &mut i32) -> isize {

@@ -13,7 +13,7 @@ test = false
 bench = false
 
 [[bin]]
-name = "cat_filea"
+name = "cat"
 test = false
 bench = false
 

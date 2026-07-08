@@ -2,7 +2,8 @@ pub use address::{PhysAddr, PhysPageNum, StepByOne, VirtAddr};
 pub use frame_allocator::{FrameTracker, frame_alloc, frame_dealloc};
 pub use memory_set::{KERNEL_SPACE, MapPermission, MemorySet, kernel_token, remap_test};
 pub use page_table::{
-    PageTable, UserBuffer, translated_byte_buffer, translated_refmut, translated_str,
+    PageTable, UserBuffer, translated_byte_buffer, translated_ref, translated_refmut,
+    translated_str,
 };
 
 mod address;
