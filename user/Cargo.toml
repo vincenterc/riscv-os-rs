@@ -93,6 +93,11 @@ test = false
 bench = false
 
 [[bin]]
+name = "run_pipe_test"
+test = false
+bench = false
+
+[[bin]]
 name = "sig_simple"
 test = false
 bench = false
