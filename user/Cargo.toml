@@ -88,6 +88,21 @@ test = false
 bench = false
 
 [[bin]]
+name = "sig_simple"
+test = false
+bench = false
+
+[[bin]]
+name = "sig_simple2"
+test = false
+bench = false
+
+[[bin]]
+name = "sig_tests"
+test = false
+bench = false
+
+[[bin]]
 name = "sleep"
 test = false
 bench = false

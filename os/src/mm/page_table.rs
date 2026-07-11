@@ -2,7 +2,6 @@ use alloc::vec::Vec;
 use alloc::{string::String, vec};
 use bitflags::bitflags;
 
-use crate::mm::page_table;
 use crate::mm::{
     VirtAddr,
     address::{PhysAddr, PhysPageNum, StepByOne, VirtPageNum},

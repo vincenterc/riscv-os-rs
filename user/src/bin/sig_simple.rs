@@ -1,0 +1,31 @@
+#![no_std]
+#![no_main]
+
+use user_lib::{SIGUSR1, SignalAction, exit, getpid, kill, sigaction, sigreturn};
+
+#[macro_use]
+extern crate user_lib;
+
+fn func() {
+    println!("user_sig_test passed");
+    sigreturn();
+}
+
+#[unsafe(no_mangle)]
+pub fn main() -> i32 {
+    let mut new = SignalAction::default();
+    let mut old = SignalAction::default();
+    new.handler = linker_symbol_addr!(func);
+
+    println!("signal_simple: sigaction");
+    if sigaction(SIGUSR1, Some(&new), Some(&mut old)) < 0 {
+        panic!("Sigaction failed!");
+    }
+    println!("signal_simple: kill");
+    if kill(getpid() as usize, SIGUSR1) < 0 {
+        println!("Kill failed!");
+        exit(1);
+    }
+    println!("signal_simple: Done");
+    0
+}
