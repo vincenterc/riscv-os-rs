@@ -1,0 +1,14 @@
+#![no_std]
+#![no_main]
+
+#[macro_use]
+extern crate user_lib;
+
+#[unsafe(no_mangle)]
+pub fn main(argc: usize, argv: &[&str]) -> i32 {
+    println!("argc = {}", argc);
+    for (i, arg) in argv.iter().enumerate() {
+        println!("argv[{}] = {}", i, arg);
+    }
+    0
+}

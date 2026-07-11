@@ -18,6 +18,11 @@ test = false
 bench = false
 
 [[bin]]
+name = "cmdline_args"
+test = false
+bench = false
+
+[[bin]]
 name = "exit"
 test = false
 bench = false
