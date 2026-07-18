@@ -14,7 +14,7 @@ use crate::{
     sync::UPSafeCell,
     task::{
         SignalActions, SignalFlags,
-        pid::{KernelStack, PidHandle, pid_alloc},
+        id::{KernelStack, PidHandle, pid_alloc},
     },
     trap::{TrapContext, trap_handler},
 };
