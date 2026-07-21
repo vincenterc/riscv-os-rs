@@ -133,6 +133,16 @@ test = false
 bench = false
 
 [[bin]]
+name = "threads"
+test = false
+bench = false
+
+[[bin]]
+name = "threads_arg"
+test = false
+bench = false
+
+[[bin]]
 name = "user_shell"
 test = false
 bench = false

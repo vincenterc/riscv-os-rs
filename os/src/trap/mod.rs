@@ -7,11 +7,11 @@ use riscv::register::{
 };
 
 use crate::{
-    config::{TRAMPOLINE, TRAP_CONTEXT},
+    config::{TRAMPOLINE, TRAP_CONTEXT_BASE},
     syscall::syscall,
     task::{
         SignalFlags, check_signals_error_of_current, current_add_signal, current_trap_cx,
-        current_user_token, exit_current_and_run_next, handle_signals,
+        current_trap_cx_user_va, current_user_token, exit_current_and_run_next, handle_signals,
         suspend_current_and_run_next,
     },
     timer::set_next_trigger,
@@ -103,7 +103,7 @@ pub fn trap_handler() -> ! {
 #[unsafe(no_mangle)]
 pub fn trap_return() -> ! {
     set_user_trap_entry();
-    let trap_cx_ptr = TRAP_CONTEXT;
+    let trap_cx_user_va = current_trap_cx_user_va();
     let user_satp = current_user_token();
     unsafe extern "C" {
         fn __alltraps();
@@ -115,7 +115,7 @@ pub fn trap_return() -> ! {
             "fence.i",
             "jr {restore_va}",
             restore_va = in(reg) restore_va,
-            in("a0") trap_cx_ptr,
+            in("a0") trap_cx_user_va,
             in("a1") user_satp,
             options(noreturn)
         );
