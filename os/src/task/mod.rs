@@ -22,7 +22,7 @@ mod switch;
 mod task;
 
 /// pid of usertests app in TEST=1
-pub const IDLE_PID: usize = 0;
+pub const IDLE_PID: usize = 1;
 
 pub fn suspend_current_and_run_next() {
     // There must be an application running.
