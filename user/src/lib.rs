@@ -276,3 +276,11 @@ pub fn waittid(tid: usize) -> isize {
         }
     }
 }
+
+#[macro_export]
+macro_rules! vload {
+    ($var: expr) => {
+        // unsafe { core::intrinsics::volatile_load($var_ref as *const _ as _) }
+        unsafe { core::ptr::read_volatile(core::ptr::addr_of!($var)) }
+    };
+}

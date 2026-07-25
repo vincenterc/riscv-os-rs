@@ -13,6 +13,31 @@ test = false
 bench = false
 
 [[bin]]
+name = "adder"
+test = false
+bench = false
+
+[[bin]]
+name = "adder_atomic"
+test = false
+bench = false
+
+[[bin]]
+name = "adder_peterson_spin"
+test = false
+bench = false
+
+[[bin]]
+name = "adder_peterson_yield"
+test = false
+bench = false
+
+[[bin]]
+name = "adder_simple_spin"
+test = false
+bench = false
+
+[[bin]]
 name = "cat"
 test = false
 bench = false
