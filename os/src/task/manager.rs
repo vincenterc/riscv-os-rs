@@ -6,7 +6,10 @@ use lazy_static::lazy_static;
 
 use crate::{
     sync::UPSafeCell,
-    task::{process::ProcessControlBlock, task::TaskControlBlock},
+    task::{
+        process::ProcessControlBlock,
+        task::{TaskControlBlock, TaskStatus},
+    },
 };
 
 pub struct TaskManager {
@@ -50,6 +53,13 @@ lazy_static! {
 
 pub fn add_task(task: Arc<TaskControlBlock>) {
     TASK_MANAGER.exclusive_access().add(task);
+}
+
+pub fn wakeup_task(task: Arc<TaskControlBlock>) {
+    let mut task_inner = task.inner_exclusive_access();
+    task_inner.task_status = TaskStatus::Ready;
+    drop(task_inner);
+    add_task(task);
 }
 
 pub fn remove_task(task: Arc<TaskControlBlock>) {

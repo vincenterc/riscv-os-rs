@@ -7,14 +7,14 @@ use riscv::register::{
 };
 
 use crate::{
-    config::{TRAMPOLINE, TRAP_CONTEXT_BASE},
+    config::TRAMPOLINE,
     syscall::syscall,
     task::{
         SignalFlags, check_signals_error_of_current, current_add_signal, current_trap_cx,
         current_trap_cx_user_va, current_user_token, exit_current_and_run_next, handle_signals,
         suspend_current_and_run_next,
     },
-    timer::set_next_trigger,
+    timer::{check_timer, set_next_trigger},
 };
 pub use context::TrapContext;
 
@@ -79,6 +79,7 @@ pub fn trap_handler() -> ! {
         }
         Trap::Interrupt(Interrupt::SupervisorTimer) => {
             set_next_trigger();
+            check_timer();
             suspend_current_and_run_next();
         }
         _ => {
