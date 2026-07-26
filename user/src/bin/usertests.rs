@@ -11,6 +11,10 @@ extern crate user_lib;
 
 // item of TESTS : app_name(argv_0), argv_1, argv_2, argv_3, exit_code
 static SUCC_TESTS: &[(&str, &str, &str, &str, i32)] = &[
+    ("adder_mutex_blocking\0", "\0", "\0", "\0", 0),
+    ("adder_mutex_spin\0", "\0", "\0", "\0", 0),
+    ("adder_peterson_spin\0", "\0", "\0", "\0", 0),
+    ("adder_peterson_yield\0", "\0", "\0", "\0", 0),
     ("filetest_simple\0", "\0", "\0", "\0", 0),
     ("cat\0", "filea\0", "\0", "\0", 0),
     ("cmdline_args\0", "1\0", "2\0", "3\0", 0),

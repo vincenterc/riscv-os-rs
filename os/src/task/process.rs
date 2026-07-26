@@ -10,7 +10,7 @@ use alloc::{
 use crate::{
     fs::{File, Stdin, Stdout},
     mm::{KERNEL_SPACE, MemorySet, translated_refmut},
-    sync::UPSafeCell,
+    sync::{Mutex, UPSafeCell},
     task::{
         SignalActions, SignalFlags, add_task,
         id::{PidHandle, RecycleAllocator, pid_alloc},
@@ -64,6 +64,7 @@ impl ProcessControlBlock {
                     trap_ctx_backup: None,
                     tasks: Vec::new(),
                     task_res_allocator: RecycleAllocator::new(),
+                    mutex_list: Vec::new(),
                 })
             },
         });
@@ -187,6 +188,7 @@ impl ProcessControlBlock {
                     trap_ctx_backup: None,
                     tasks: Vec::new(),
                     task_res_allocator: RecycleAllocator::new(),
+                    mutex_list: Vec::new(),
                 })
             },
         });
@@ -245,6 +247,7 @@ pub struct ProcessControlBlockInner {
     pub trap_ctx_backup: Option<TrapContext>,
     pub tasks: Vec<Option<Arc<TaskControlBlock>>>,
     pub task_res_allocator: RecycleAllocator,
+    pub mutex_list: Vec<Option<Arc<dyn Mutex>>>,
 }
 
 impl ProcessControlBlockInner {

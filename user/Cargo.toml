@@ -23,6 +23,16 @@ test = false
 bench = false
 
 [[bin]]
+name = "adder_mutex_blocking"
+test = false
+bench = false
+
+[[bin]]
+name = "adder_mutex_spin"
+test = false
+bench = false
+
+[[bin]]
 name = "adder_peterson_spin"
 test = false
 bench = false
