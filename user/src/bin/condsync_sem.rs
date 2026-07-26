@@ -1,0 +1,63 @@
+#![no_std]
+#![no_main]
+
+use alloc::vec;
+use user_lib::{
+    exit, mutex_blocking_create, mutex_lock, mutex_unlock, semaphore_create, semaphore_down,
+    semaphore_up, sleep, thread_create, waittid,
+};
+
+#[macro_use]
+extern crate user_lib;
+extern crate alloc;
+
+static mut A: usize = 0;
+const SEM_ID: usize = 0;
+const MUTEX_ID: usize = 0;
+
+fn first() -> ! {
+    sleep(10);
+    println!("First work, Change A --> 1 and wakeup Second");
+    mutex_lock(MUTEX_ID);
+    unsafe {
+        A = 1;
+    }
+    semaphore_up(SEM_ID);
+    mutex_unlock(MUTEX_ID);
+    exit(0)
+}
+
+fn second() -> ! {
+    println!("Second want to continue,but need to wait A=1");
+    loop {
+        mutex_lock(MUTEX_ID);
+        if unsafe { A } == 0 {
+            println!("Second: A is {}", unsafe { A });
+            mutex_unlock(MUTEX_ID);
+            semaphore_down(SEM_ID);
+        } else {
+            mutex_unlock(MUTEX_ID);
+            break;
+        }
+    }
+    println!("A is {}, Second can work now", unsafe { A });
+    exit(0)
+}
+
+#[unsafe(no_mangle)]
+pub fn main() -> i32 {
+    // create semaphore & mutex
+    assert_eq!(semaphore_create(0) as usize, SEM_ID);
+    assert_eq!(mutex_blocking_create() as usize, MUTEX_ID);
+    // create threads
+    let threads = vec![
+        thread_create(linker_symbol_addr!(first), 0),
+        thread_create(linker_symbol_addr!(second), 0),
+    ];
+    // wait for all threads to complete
+    for thread in threads.iter() {
+        waittid(*thread as usize);
+    }
+    println!("test_semaphore passed!");
+    0
+}

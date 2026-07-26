@@ -300,6 +300,16 @@ pub fn semaphore_down(sem_id: usize) {
     sys_semaphore_down(sem_id);
 }
 
+pub fn condvar_create() -> isize {
+    sys_condvar_create()
+}
+pub fn condvar_signal(condvar_id: usize) {
+    sys_condvar_signal(condvar_id);
+}
+pub fn condvar_wait(condvar_id: usize, mutex_id: usize) {
+    sys_condvar_wait(condvar_id, mutex_id);
+}
+
 #[macro_export]
 macro_rules! vload {
     ($var: expr) => {
