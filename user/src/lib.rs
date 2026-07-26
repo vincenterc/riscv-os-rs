@@ -97,6 +97,10 @@ pub fn exit(exit_code: i32) -> ! {
     sys_exit(exit_code);
 }
 
+pub fn sleep(sleep_ms: usize) {
+    sys_sleep(sleep_ms);
+}
+
 pub fn yield_() -> isize {
     sys_yield()
 }
@@ -138,13 +142,6 @@ pub fn waitpid(pid: usize, exit_code: &mut i32) -> isize {
             // -1 or a real pid
             exit_pid => return exit_pid,
         }
-    }
-}
-
-pub fn sleep(period_ms: usize) {
-    let start = sys_get_time();
-    while sys_get_time() < start + period_ms as isize {
-        sys_yield();
     }
 }
 
