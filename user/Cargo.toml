@@ -154,6 +154,11 @@ test = false
 bench = false
 
 [[bin]]
+name = "phil_din_mutex"
+test = false
+bench = false
+
+[[bin]]
 name = "run_pipe_test"
 test = false
 bench = false
