@@ -28,6 +28,7 @@ static SUCC_TESTS: &[(&str, &str, &str, &str, i32)] = &[
     ("forktest2\0", "\0", "\0", "\0", 0),
     ("forktree\0", "\0", "\0", "\0", 0),
     ("hello_world\0", "\0", "\0", "\0", 0),
+    // ("huge_write\0", "\0", "\0", "\0", 0),
     ("matrix\0", "\0", "\0", "\0", 0),
     ("mpsc_sem\0", "\0", "\0", "\0", 0),
     ("pipe_large_test\0", "\0", "\0", "\0", 0),
@@ -44,8 +45,12 @@ static SUCC_TESTS: &[(&str, &str, &str, &str, i32)] = &[
     ("yield\0", "\0", "\0", "\0", 0),
 ];
 
-static FAIL_TESTS: &[(&str, &str, &str, &str, i32)] =
-    &[("stack_overflow\0", "\0", "\0", "\0", -11)];
+static FAIL_TESTS: &[(&str, &str, &str, &str, i32)] = &[
+    ("adder\0", "\0", "\0", "\0", -6),
+    ("adder_simple_spin\0", "\0", "\0", "\0", -6),
+    ("adder_simple_yield\0", "\0", "\0", "\0", -6),
+    ("stack_overflow\0", "\0", "\0", "\0", -11),
+];
 
 fn run_tests(tests: &[(&str, &str, &str, &str, i32)]) -> i32 {
     let mut pass_num = 0;
